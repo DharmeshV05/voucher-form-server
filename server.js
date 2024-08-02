@@ -20,7 +20,7 @@ const SCOPES = [
 ];
 
 const auth = new GoogleAuth({
-  keyFile: 'credentials.json',
+  keyFile: "credentials.json",
   scopes: SCOPES,
 });
 const sheets = google.sheets({ version: 'v4', auth });
