@@ -13,7 +13,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:3000', // Replace with your frontend URL
+  optionsSuccessStatus: 200
+}));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
