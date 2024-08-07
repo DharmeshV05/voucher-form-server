@@ -197,6 +197,7 @@ app.post('/submit', upload.none(), async (req, res) => {
     doc.fontSize(12).text(voucherData.amount, 130, 320);
 
     doc.fontSize(12).text('The Sum.', 30, 360);
+    doc.moveTo(120, 332).lineTo(250, 332).stroke();
     doc.fontSize(12).text(voucherData.amountRs, 150, 360);
 
     const amountSectionY = 360;
