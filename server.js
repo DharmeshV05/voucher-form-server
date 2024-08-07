@@ -201,7 +201,7 @@ app.post('/submit', upload.none(), async (req, res) => {
     doc.fontSize(12).text(voucherData.amountRs, 150, 360);
 
     const amountSectionY = 360;
-    const gap = 50;
+    const gap = 70;
     const signatureSectionY = amountSectionY + gap;
 
     const drawSignatureLine = (label, xPosition, yPosition) => {
