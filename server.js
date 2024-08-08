@@ -12,7 +12,6 @@ const cors = require('cors');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-
 app.use(cors({
   origin: '*', 
   credentials: true,
@@ -66,14 +65,13 @@ const lastVoucherNumbers = {
   RawEngineering: 0,
 };
 
-// New endpoint to get the current voucher number for a given filter
+// Endpoint to get the current voucher number for a given filter without incrementing
 app.get('/get-voucher-no', (req, res) => {
   const filter = req.query.filter;
   if (!filter || !filterToSpreadsheetMap[filter]) {
     return res.status(400).send({ error: 'Invalid filter option' });
   }
-  lastVoucherNumbers[filter]++;
-  res.send({ voucherNo: lastVoucherNumbers[filter] });
+  res.send({ voucherNo: lastVoucherNumbers[filter] + 1 });
 });
 
 app.post('/submit', upload.none(), async (req, res) => {
@@ -86,7 +84,9 @@ app.post('/submit', upload.none(), async (req, res) => {
       return res.status(400).send({ error: 'Invalid filter option' });
     }
 
-    const voucherNo = parseInt(voucherData.voucherNo, 10);
+    // Increment the voucher number only after successful submission
+    lastVoucherNumbers[filterOption]++;
+    const voucherNo = lastVoucherNumbers[filterOption];
     voucherData.voucherNo = voucherNo;
 
     const sheetTitle = filterOption;
