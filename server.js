@@ -177,7 +177,7 @@ app.post("/submit", upload.none(), async (req, res) => {
 
     doc.fontSize(12).text("Date:", 400, 20);
     doc.fontSize(12).text(voucherData.date, 440, 20);
-    doc.moveTo(550, underlineYPosition).lineTo(550, underlineYPosition).stroke();
+    doc.moveTo(450, underlineYPosition).lineTo(550, underlineYPosition).stroke();
 
     doc.fontSize(12).text("Voucher No:", 400, 40);
     doc.fontSize(12).text(voucherData.voucherNo, 470, 40);
