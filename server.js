@@ -175,7 +175,7 @@ app.post("/submit", upload.none(), async (req, res) => {
 
     
     doc.fontSize(12).text("Date:", 400, 20);
-    doc.fontSize(12).text(voucherData.date, 430, 20);
+    doc.fontSize(12).text(voucherData.date, 440, 20);
     doc.fontSize(12).text("Voucher No:", 400, 40);
     doc.fontSize(12).text(voucherData.voucherNo, 470, 40);
 
@@ -210,7 +210,7 @@ app.post("/submit", upload.none(), async (req, res) => {
     doc.fontSize(12).text(voucherData.amount, 130, 320);
 
     doc.fontSize(12).text("The Sum.", 30, 360);
-    doc.moveTo(120, 372).lineTo(550, 372).stroke();
+    doc.moveTo(120, 332).lineTo(550, 372).stroke();
     doc.fontSize(12).text(voucherData.amountRs, 150, 360);
 
     const amountSectionY = 360;
