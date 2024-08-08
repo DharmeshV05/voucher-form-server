@@ -74,7 +74,6 @@ const lastVoucherNumbers = {
   RawEngineering: 0,
 };
 
-
 app.get("/get-voucher-no", (req, res) => {
   const filter = req.query.filter;
   if (!filter || !filterToSpreadsheetMap[filter]) {
@@ -92,8 +91,7 @@ app.post("/submit", upload.none(), async (req, res) => {
     if (!spreadsheetId) {
       return res.status(400).send({ error: "Invalid filter option" });
     }
-
-    
+ 
     lastVoucherNumbers[filterOption]++;
     const voucherNo = lastVoucherNumbers[filterOption];
     voucherData.voucherNo = voucherNo;
@@ -180,11 +178,11 @@ app.post("/submit", upload.none(), async (req, res) => {
     doc.fontSize(12).text("Voucher No:", 400, 40);
     doc.fontSize(12).text(voucherData.voucherNo, 470, 40);
     doc.fontSize(12).text(voucherData.date, 440, 20);
-    doc.moveTo(450, underlineYPosition).lineTo(550, underlineYPosition).stroke();
+    doc.moveTo(440, underlineYPosition).lineTo(550, underlineYPosition).stroke();
 
     doc.fontSize(12).text("Voucher No:", 400, 40);
     doc.fontSize(12).text(voucherData.voucherNo, 470, 40);
-    doc.moveTo(400, underlineYPosition + 20).lineTo(550, underlineYPosition + 20).stroke();
+    doc.moveTo(440, underlineYPosition + 20).lineTo(550, underlineYPosition + 20).stroke();
 
     const filterLogoMap = {
       Contentstack: "public/contentstack.png",
