@@ -200,10 +200,10 @@ app.post("/submit", upload.none(), async (req, res) => {
       doc.fontSize(12).text(value, 130, yPosition);
     };
 
-    drawLineAndText("Pay to", voucherData.payTo, 160);
-    drawLineAndText("Pay by", voucherData.paidBy, 200);
-    drawLineAndText("Account Head", voucherData.accountHead, 240);
-    drawLineAndText("Towards", voucherData.account, 280);
+    drawLineAndText("Pay to:", voucherData.payTo, 160);
+    drawLineAndText("Pay by:", voucherData.paidBy, 200);
+    drawLineAndText("Account Head:", voucherData.accountHead, 240);
+    drawLineAndText("Towards:", voucherData.account, 280);
 
     doc.fontSize(12).text("Amount Rs.", 30, 320);
     doc.moveTo(120, 332).lineTo(550, 332).stroke();
