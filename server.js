@@ -107,7 +107,23 @@ app.post("/submit", upload.none(), async (req, res) => {
     const sheetExists = sheetsList.some(
       (sheet) => sheet.properties.title === sheetTitle
     );
-
+    // 
+    app.post("/reset", (req, res) => {
+      try {
+        // Reset the voucher numbers
+        for (const key in lastVoucherNumbers) {
+          if (lastVoucherNumbers.hasOwnProperty(key)) {
+            lastVoucherNumbers[key] = 0;
+          }
+        }
+    
+        res.status(200).send({ message: "Voucher numbers reset successfully" });
+      } catch (error) {
+        console.error("Error resetting voucher numbers:", error);
+        res.status(500).send({ error: "Failed to reset voucher numbers" });
+      }
+    });
+    // 
     if (!sheetExists) {
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
