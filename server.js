@@ -20,12 +20,6 @@ app.use(
   })
 );
 
-app.use(cors({
-  origin: '*', 
-  credentials: true,
-  optionsSuccessStatus: 200
-}));
-
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -74,6 +68,7 @@ const lastVoucherNumbers = {
   RawEngineering: 0,
 };
 
+// Get next voucher number
 app.get("/get-voucher-no", (req, res) => {
   const filter = req.query.filter;
   if (!filter || !filterToSpreadsheetMap[filter]) {
@@ -82,6 +77,22 @@ app.get("/get-voucher-no", (req, res) => {
   res.send({ voucherNo: lastVoucherNumbers[filter] + 1 });
 });
 
+// Reset voucher numbers
+app.post("/reset", (req, res) => {
+  try {
+    for (const key in lastVoucherNumbers) {
+      if (lastVoucherNumbers.hasOwnProperty(key)) {
+        lastVoucherNumbers[key] = 0;
+      }
+    }
+    res.status(200).send({ message: "Voucher numbers reset successfully" });
+  } catch (error) {
+    console.error("Error resetting voucher numbers:", error);
+    res.status(500).send({ error: "Failed to reset voucher numbers" });
+  }
+});
+
+// Submit voucher data and generate PDF
 app.post("/submit", upload.none(), async (req, res) => {
   try {
     const voucherData = req.body;
@@ -91,7 +102,7 @@ app.post("/submit", upload.none(), async (req, res) => {
     if (!spreadsheetId) {
       return res.status(400).send({ error: "Invalid filter option" });
     }
- 
+
     lastVoucherNumbers[filterOption]++;
     const voucherNo = lastVoucherNumbers[filterOption];
     voucherData.voucherNo = voucherNo;
@@ -107,23 +118,7 @@ app.post("/submit", upload.none(), async (req, res) => {
     const sheetExists = sheetsList.some(
       (sheet) => sheet.properties.title === sheetTitle
     );
-    // 
-    app.post("/reset", (req, res) => {
-      try {
-        // Reset the voucher numbers
-        for (const key in lastVoucherNumbers) {
-          if (lastVoucherNumbers.hasOwnProperty(key)) {
-            lastVoucherNumbers[key] = 0;
-          }
-        }
-    
-        res.status(200).send({ message: "Voucher numbers reset successfully" });
-      } catch (error) {
-        console.error("Error resetting voucher numbers:", error);
-        res.status(500).send({ error: "Failed to reset voucher numbers" });
-      }
-    });
-    // 
+
     if (!sheetExists) {
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
