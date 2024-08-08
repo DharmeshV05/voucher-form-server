@@ -175,7 +175,7 @@ app.post("/submit", upload.none(), async (req, res) => {
 
     const underlineYPosition = 35; 
 
-    doc.fontSize(12).text("Date:", 500, 20);
+    doc.fontSize(12).text("Date:", 440, 20);
     doc.fontSize(12).text(voucherData.date, 440, 20);
     doc.moveTo(440, underlineYPosition).lineTo(550, underlineYPosition).stroke();
 
