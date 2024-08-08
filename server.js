@@ -190,7 +190,7 @@ app.post("/submit", upload.none(), async (req, res) => {
     };
     const filterLogo = filterLogoMap[voucherData.filter];
     if (filterLogo) {
-      doc.image(filterLogo, 30, 30, { width: 100, height: 150 });
+      doc.image(filterLogo, 20, 30, { width: 100, height: 100 });
     }
 
     doc.moveDown(3);
