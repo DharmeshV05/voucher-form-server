@@ -173,11 +173,15 @@ app.post("/submit", upload.none(), async (req, res) => {
     const pdfStream = fs.createWriteStream(pdfFilePath);
     doc.pipe(pdfStream);
 
-    
+    const underlineYPosition = 35; 
+
     doc.fontSize(12).text("Date:", 400, 20);
     doc.fontSize(12).text(voucherData.date, 440, 20);
+    doc.moveTo(400, underlineYPosition).lineTo(550, underlineYPosition).stroke();
+
     doc.fontSize(12).text("Voucher No:", 400, 40);
     doc.fontSize(12).text(voucherData.voucherNo, 470, 40);
+    doc.moveTo(400, underlineYPosition + 20).lineTo(550, underlineYPosition + 20).stroke();
 
     const filterLogoMap = {
       Contentstack: "public/contentstack.png",
