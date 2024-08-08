@@ -181,7 +181,7 @@ app.post("/submit", upload.none(), async (req, res) => {
 
     doc.fontSize(12).text("Voucher No:", 400, 40);
     doc.fontSize(12).text(voucherData.voucherNo, 470, 40);
-    doc.moveTo(400, underlineYPosition + 20).lineTo(550, underlineYPosition + 20).stroke();
+    doc.moveTo(430, underlineYPosition + 20).lineTo(550, underlineYPosition + 20).stroke();
 
     const filterLogoMap = {
       Contentstack: "public/contentstack.png",
