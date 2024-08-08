@@ -20,12 +20,6 @@ app.use(
   })
 );
 
-app.use(cors({
-  origin: '*', 
-  credentials: true,
-  optionsSuccessStatus: 200
-}));
-
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -107,7 +101,7 @@ app.post("/submit", upload.none(), async (req, res) => {
     const sheetExists = sheetsList.some(
       (sheet) => sheet.properties.title === sheetTitle
     );
-
+    
     if (!sheetExists) {
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
