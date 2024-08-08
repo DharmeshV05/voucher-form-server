@@ -19,6 +19,13 @@ app.use(
     optionsSuccessStatus: 200,
   })
 );
+
+app.use(cors({
+  origin: '*', 
+  credentials: true,
+  optionsSuccessStatus: 200
+}));
+
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -171,6 +178,9 @@ app.post("/submit", upload.none(), async (req, res) => {
     doc.fontSize(12).text(voucherData.date, 470, 20);
     doc.fontSize(12).text("Voucher No:", 400, 40);
     doc.fontSize(12).text(voucherData.voucherNo, 470, 40);
+    doc.fontSize(12).text(voucherData.date, 450, 20);
+    doc.fontSize(12).text("Voucher No:", 400, 40);
+    doc.fontSize(12).text(voucherData.voucherNo, 480, 40);
 
     const filterLogoMap = {
       Contentstack: "public/contentstack.png",
