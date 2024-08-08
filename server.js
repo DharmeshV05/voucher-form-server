@@ -19,6 +19,13 @@ app.use(
     optionsSuccessStatus: 200,
   })
 );
+
+app.use(cors({
+  origin: '*', 
+  credentials: true,
+  optionsSuccessStatus: 200
+}));
+
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -166,11 +173,18 @@ app.post("/submit", upload.none(), async (req, res) => {
     const pdfStream = fs.createWriteStream(pdfFilePath);
     doc.pipe(pdfStream);
 
-    
+    const underlineYPosition = 35; 
+
     doc.fontSize(12).text("Date:", 400, 20);
     doc.fontSize(12).text(voucherData.date, 470, 20);
     doc.fontSize(12).text("Voucher No:", 400, 40);
     doc.fontSize(12).text(voucherData.voucherNo, 470, 40);
+    doc.fontSize(12).text(voucherData.date, 440, 20);
+    doc.moveTo(450, underlineYPosition).lineTo(550, underlineYPosition).stroke();
+
+    doc.fontSize(12).text("Voucher No:", 400, 40);
+    doc.fontSize(12).text(voucherData.voucherNo, 470, 40);
+    doc.moveTo(400, underlineYPosition + 20).lineTo(550, underlineYPosition + 20).stroke();
 
     const filterLogoMap = {
       Contentstack: "public/contentstack.png",
@@ -193,18 +207,18 @@ app.post("/submit", upload.none(), async (req, res) => {
       doc.fontSize(12).text(value, 130, yPosition);
     };
 
-    drawLineAndText("Pay to", voucherData.payTo, 160);
-    drawLineAndText("Pay by", voucherData.paidBy, 200);
-    drawLineAndText("Account Head", voucherData.accountHead, 240);
-    drawLineAndText("Towards", voucherData.account, 280);
+    drawLineAndText("Pay to:", voucherData.payTo, 160);
+    drawLineAndText("Pay by:", voucherData.paidBy, 200);
+    drawLineAndText("Account Head:", voucherData.accountHead, 240);
+    drawLineAndText("Towards:", voucherData.account, 280);
 
     doc.fontSize(12).text("Amount Rs.", 30, 320);
-    doc.moveTo(120, 332).lineTo(250, 332).stroke();
+    doc.moveTo(120, 332).lineTo(550, 332).stroke();
     doc.fontSize(12).text(voucherData.amount, 130, 320);
 
     doc.fontSize(12).text("The Sum.", 30, 360);
     doc.moveTo(120, 372).lineTo(550, 372).stroke();
-    doc.fontSize(12).text(voucherData.amountRs, 150, 360);
+    doc.fontSize(12).text(voucherData.amountRs, 130, 360);
 
     const amountSectionY = 360;
     const gap = 60;
