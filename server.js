@@ -82,17 +82,18 @@ app.get("/get-voucher-no", (req, res) => {
   res.send({ voucherNo: lastVoucherNumbers[filter] + 1 });
 });
 
-app.post('/submit', upload.none(), async (req, res) => {
+app.post("/submit", upload.none(), async (req, res) => {
   try {
     const voucherData = req.body;
     const filterOption = voucherData.filter;
     const spreadsheetId = filterToSpreadsheetMap[filterOption];
 
     if (!spreadsheetId) {
-      return res.status(400).send({ error: 'Invalid filter option' });
+      return res.status(400).send({ error: "Invalid filter option" });
     }
-
-    const voucherNo = parseInt(voucherData.voucherNo, 10);
+ 
+    lastVoucherNumbers[filterOption]++;
+    const voucherNo = lastVoucherNumbers[filterOption];
     voucherData.voucherNo = voucherNo;
 
     const sheetTitle = filterOption;
@@ -106,7 +107,7 @@ app.post('/submit', upload.none(), async (req, res) => {
     const sheetExists = sheetsList.some(
       (sheet) => sheet.properties.title === sheetTitle
     );
-
+    
     if (!sheetExists) {
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
@@ -129,10 +130,10 @@ app.post('/submit', upload.none(), async (req, res) => {
 
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range: `${sheetTitle}!A1:O1`,
-        valueInputOption: 'RAW',
+        range: `${sheetTitle}!A1:N1`,
+        valueInputOption: "RAW",
         requestBody: {
-          values: [headerValues.concat('PDF Link')],
+          values: [headerValues],
         },
       });
     }
@@ -152,20 +153,17 @@ app.post('/submit', upload.none(), async (req, res) => {
         voucherData.checkedBy,
         voucherData.approvedBy,
         voucherData.receiverSignature,
-        "",  // Placeholder for PDF Link
       ],
     ];
 
-    const appendResponse = await sheets.spreadsheets.values.append({
+    await sheets.spreadsheets.values.append({
       spreadsheetId,
       range: `${sheetTitle}!A:N`,
-      valueInputOption: 'RAW',
+      valueInputOption: "RAW",
       requestBody: {
         values,
       },
     });
-
-    const updatedRow = appendResponse.data.updates.updatedRange.match(/(\d+)$/)[0];
 
     const pdfFileName = `${filterOption}_${voucherNo}.pdf`;
     const pdfFilePath = path.join(__dirname, pdfFileName);
@@ -173,15 +171,20 @@ app.post('/submit', upload.none(), async (req, res) => {
     const pdfStream = fs.createWriteStream(pdfFilePath);
     doc.pipe(pdfStream);
 
-    doc.fontSize(12).text('Date', 450, 20);
-    doc.fontSize(12).text(voucherData.date, 450, 40);
-    doc.fontSize(12).text('Voucher No.', 450, 60);
-    doc.fontSize(12).text(voucherData.voucherNo, 450, 80);
+    const underlineYPosition = 35; 
+
+    doc.fontSize(12).text("Date:", 400, 20);
+    doc.fontSize(12).text(voucherData.date, 440, 20);
+    doc.moveTo(440, underlineYPosition).lineTo(550, underlineYPosition).stroke();
+
+    doc.fontSize(12).text("Voucher No:", 400, 40);
+    doc.fontSize(12).text(voucherData.voucherNo, 470, 40);
+    doc.moveTo(440, underlineYPosition + 20).lineTo(550, underlineYPosition + 20).stroke();
 
     const filterLogoMap = {
-      Contentstack: 'public/contentstack.png',
-      Surfboard: 'public/surfboard.png',
-      RawEngineering: 'public/raw.png',
+      Contentstack: "public/contentstack.png",
+      Surfboard: "public/surfboard.png",
+      RawEngineering: "public/raw.png",
     };
     const filterLogo = filterLogoMap[voucherData.filter];
     if (filterLogo) {
@@ -192,86 +195,84 @@ app.post('/submit', upload.none(), async (req, res) => {
 
     const drawLineAndText = (label, value, yPosition) => {
       doc.fontSize(12).text(label, 30, yPosition);
-      doc.moveTo(120, yPosition + 12).lineTo(550, yPosition + 12).stroke();
+      doc
+        .moveTo(120, yPosition + 12)
+        .lineTo(550, yPosition + 12)
+        .stroke();
       doc.fontSize(12).text(value, 130, yPosition);
     };
 
-    drawLineAndText('Pay to', voucherData.payTo, 160);
-    drawLineAndText('Pay by', voucherData.paidBy, 200);
-    drawLineAndText('Account Head', voucherData.accountHead, 240);
-    drawLineAndText('Towards', voucherData.account, 280);
+    drawLineAndText("Pay to:", voucherData.payTo, 160);
+    drawLineAndText("Pay by:", voucherData.paidBy, 200);
+    drawLineAndText("Account Head:", voucherData.accountHead, 240);
+    drawLineAndText("Towards:", voucherData.account, 280);
 
-    doc.fontSize(12).text('Amount Rs.', 30, 320);
-    doc.moveTo(120, 332).lineTo(250, 332).stroke();
+    doc.fontSize(12).text("Amount Rs.", 30, 320);
+    doc.moveTo(120, 332).lineTo(550, 332).stroke();
     doc.fontSize(12).text(voucherData.amount, 130, 320);
 
-    doc.fontSize(12).text('The Sum.', 30, 360);
+    doc.fontSize(12).text("The Sum.", 30, 360);
     doc.moveTo(120, 372).lineTo(550, 372).stroke();
-    doc.fontSize(12).text(voucherData.amountRs, 150, 360);
+    doc.fontSize(12).text(voucherData.amountRs, 130, 360);
 
     const amountSectionY = 360;
     const gap = 60;
     const signatureSectionY = amountSectionY + gap;
 
     const drawSignatureLine = (label, xPosition, yPosition) => {
-      doc.moveTo(xPosition, yPosition).lineTo(xPosition + 100, yPosition).stroke();
+      doc
+        .moveTo(xPosition, yPosition)
+        .lineTo(xPosition + 100, yPosition)
+        .stroke();
       doc.fontSize(12).text(label, xPosition, yPosition + 5);
     };
 
-    drawSignatureLine('Prepared By', 30, signatureSectionY);
-    drawSignatureLine('Checked By', 180, signatureSectionY);
-    drawSignatureLine('Approved By', 330, signatureSectionY);
-    drawSignatureLine('Receiver Signature', 480, signatureSectionY);
+    drawSignatureLine("Prepared By", 30, signatureSectionY);
+    drawSignatureLine("Checked By", 180, signatureSectionY);
+    drawSignatureLine("Approved By", 330, signatureSectionY);
+    drawSignatureLine("Receiver Signature", 480, signatureSectionY);
 
     doc.end();
 
-    pdfStream.on('finish', async () => {
+    pdfStream.on("finish", async () => {
       try {
         const pdfFileMetadata = {
           name: pdfFileName,
           parents: [driveFolderId],
         };
         const pdfMedia = {
-          mimeType: 'application/pdf',
+          mimeType: "application/pdf",
           body: fs.createReadStream(pdfFilePath),
         };
         const pdfUploadResponse = await drive.files.create({
           resource: pdfFileMetadata,
           media: pdfMedia,
-          fields: 'id, webViewLink',
-        });
-
-        const pdfLink = pdfUploadResponse.data.webViewLink;
-
-        await sheets.spreadsheets.values.update({
-          spreadsheetId,
-          range: `${sheetTitle}!O${updatedRow}`,
-          valueInputOption: 'RAW',
-          requestBody: {
-            values: [[pdfLink]],
-          },
+          fields: "id",
         });
 
         fs.unlinkSync(pdfFilePath);
 
         res.status(200).send({
-          message: 'Data submitted successfully, PDF uploaded, and link added to Google Sheet!',
+          message: "Data submitted successfully and PDF uploaded!",
           sheetURL: sheetURL,
           pdfFileId: pdfUploadResponse.data.id,
-          pdfLink: pdfLink,
         });
       } catch (error) {
-        console.error('Error uploading PDF:', error);
-        res.status(500).send({ error: 'Failed to upload PDF' });
+        console.error("Error uploading PDF:", error);
+        res.status(500).send({ error: "Failed to upload PDF" });
       }
     });
 
-    pdfStream.on('error', (error) => {
-      console.error('Error creating PDF:', error);
-      res.status(500).send({ error: 'Failed to create PDF' });
+    pdfStream.on("error", (error) => {
+      console.error("Error creating PDF:", error);
+      res.status(500).send({ error: "Failed to create PDF" });
     });
   } catch (error) {
-    console.error('Error submitting data:', error);
-    res.status(500).send({ error: 'Failed to submit data' });
+    console.error("Error submitting data:", error);
+    res.status(500).send({ error: "Failed to submit data" });
   }
+});
+
+app.listen(PORT, () => {
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
