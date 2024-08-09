@@ -247,41 +247,31 @@ app.post("/submit", upload.none(), async (req, res) => {
         const pdfUploadResponse = await drive.files.create({
           resource: pdfFileMetadata,
           media: pdfMedia,
-          fields: "id, webViewLink",
+          fields: "id",
         });
-    
-        const pdfLink = pdfUploadResponse.data.webViewLink;
-    
-        // Find the last row that was updated and add the PDF link
-        const getLastRowResponse = await sheets.spreadsheets.values.get({
-          spreadsheetId,
-          range: `${sheetTitle}!A:N`,
-        });
-    
-        const lastRow = getLastRowResponse.data.values.length;
-    
-        await sheets.spreadsheets.values.update({
-          spreadsheetId,
-          range: `${sheetTitle}!O${lastRow}`,
-          valueInputOption: "RAW",
-          requestBody: {
-            values: [[pdfLink]],
-          },
-        });
-    
+
         fs.unlinkSync(pdfFilePath);
-    
+
         res.status(200).send({
-          message: "Data submitted successfully, PDF uploaded, and link added to Google Sheet!",
+          message: "Data submitted successfully and PDF uploaded!",
           sheetURL: sheetURL,
           pdfFileId: pdfUploadResponse.data.id,
-          pdfLink: pdfLink,
         });
       } catch (error) {
         console.error("Error uploading PDF:", error);
         res.status(500).send({ error: "Failed to upload PDF" });
       }
     });
+
+    pdfStream.on("error", (error) => {
+      console.error("Error creating PDF:", error);
+      res.status(500).send({ error: "Failed to create PDF" });
+    });
+  } catch (error) {
+    console.error("Error submitting data:", error);
+    res.status(500).send({ error: "Failed to submit data" });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
