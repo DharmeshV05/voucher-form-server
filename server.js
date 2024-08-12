@@ -58,11 +58,11 @@ const headerValues = [
   "Filter",
   "Pay to",
   "Account Head",
-  "Paid by",
+  // "Paid by",
   "Towards",
   "The Sum",
   "Amount Rs.",
-  "Prepared By",
+  // "Prepared By",
   "Checked By",
   "Approved By",
   "Receiver Signature",
@@ -100,7 +100,7 @@ app.post("/submit", upload.none(), async (req, res) => {
     const sheetTitle = filterOption;
     const sheetURL = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
 
-    // Check if the sheet exists; if not, create it
+    
     const getSpreadsheetResponse = await sheets.spreadsheets.get({
       spreadsheetId,
     });
@@ -178,7 +178,7 @@ app.post("/submit", upload.none(), async (req, res) => {
     };
 
     drawLineAndText("Pay to:", voucherData.payTo, 160);
-    drawLineAndText("Pay by:", voucherData.paidBy, 200);
+    // drawLineAndText("Pay by:", voucherData.paidBy, 200);
     drawLineAndText("Account Head:", voucherData.accountHead, 240);
     drawLineAndText("Towards:", voucherData.account, 280);
 
@@ -202,7 +202,7 @@ app.post("/submit", upload.none(), async (req, res) => {
       doc.fontSize(12).text(label, xPosition, yPosition + 5);
     };
 
-    drawSignatureLine("Prepared By", 30, signatureSectionY);
+    // drawSignatureLine("Prepared By", 30, signatureSectionY);
     drawSignatureLine("Checked By", 180, signatureSectionY);
     drawSignatureLine("Approved By", 330, signatureSectionY);
     drawSignatureLine("Receiver Signature", 480, signatureSectionY);
@@ -211,7 +211,7 @@ app.post("/submit", upload.none(), async (req, res) => {
 
     pdfStream.on("finish", async () => {
       try {
-        // Upload the PDF to Google Drive
+        
         const pdfFileMetadata = {
           name: pdfFileName,
           parents: [driveFolderId],
@@ -237,11 +237,11 @@ app.post("/submit", upload.none(), async (req, res) => {
             voucherData.filter,
             voucherData.payTo,
             voucherData.accountHead,
-            voucherData.paidBy,
+            // voucherData.paidBy,
             voucherData.account,
             voucherData.amount,
             voucherData.amountRs,
-            voucherData.preparedBy,
+            // voucherData.preparedBy,
             voucherData.checkedBy,
             voucherData.approvedBy,
             voucherData.receiverSignature,
