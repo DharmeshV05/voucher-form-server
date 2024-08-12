@@ -92,7 +92,7 @@ app.post("/submit", upload.none(), async (req, res) => {
       return res.status(400).send({ error: "Invalid filter option" });
     }
 
-    // Increment the voucher number
+    
     lastVoucherNumbers[filterOption]++;
     const voucherNo = lastVoucherNumbers[filterOption];
     voucherData.voucherNo = voucherNo;
