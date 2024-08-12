@@ -91,7 +91,8 @@ app.post("/submit", upload.none(), async (req, res) => {
     if (!spreadsheetId) {
       return res.status(400).send({ error: "Invalid filter option" });
     }
- 
+
+    // Increment the voucher number
     lastVoucherNumbers[filterOption]++;
     const voucherNo = lastVoucherNumbers[filterOption];
     voucherData.voucherNo = voucherNo;
@@ -99,6 +100,7 @@ app.post("/submit", upload.none(), async (req, res) => {
     const sheetTitle = filterOption;
     const sheetURL = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
 
+    // Check if the sheet exists; if not, create it
     const getSpreadsheetResponse = await sheets.spreadsheets.get({
       spreadsheetId,
     });
@@ -107,7 +109,7 @@ app.post("/submit", upload.none(), async (req, res) => {
     const sheetExists = sheetsList.some(
       (sheet) => sheet.properties.title === sheetTitle
     );
-    
+
     if (!sheetExists) {
       await sheets.spreadsheets.batchUpdate({
         spreadsheetId,
@@ -130,40 +132,13 @@ app.post("/submit", upload.none(), async (req, res) => {
 
       await sheets.spreadsheets.values.update({
         spreadsheetId,
-        range: `${sheetTitle}!A1:N1`,
+        range: `${sheetTitle}!A1:O1`,
         valueInputOption: "RAW",
         requestBody: {
-          values: [headerValues],
+          values: [headerValues.concat("PDF Link")],
         },
       });
     }
-
-    const values = [
-      [
-        voucherData.voucherNo,
-        voucherData.date,
-        voucherData.filter,
-        voucherData.payTo,
-        voucherData.accountHead,
-        voucherData.paidBy,
-        voucherData.account,
-        voucherData.amount,
-        voucherData.amountRs,
-        voucherData.preparedBy,
-        voucherData.checkedBy,
-        voucherData.approvedBy,
-        voucherData.receiverSignature,
-      ],
-    ];
-
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: `${sheetTitle}!A:N`,
-      valueInputOption: "RAW",
-      requestBody: {
-        values,
-      },
-    });
 
     const pdfFileName = `${filterOption}_${voucherNo}.pdf`;
     const pdfFilePath = path.join(__dirname, pdfFileName);
@@ -236,6 +211,7 @@ app.post("/submit", upload.none(), async (req, res) => {
 
     pdfStream.on("finish", async () => {
       try {
+        // Upload the PDF to Google Drive
         const pdfFileMetadata = {
           name: pdfFileName,
           parents: [driveFolderId],
@@ -247,15 +223,48 @@ app.post("/submit", upload.none(), async (req, res) => {
         const pdfUploadResponse = await drive.files.create({
           resource: pdfFileMetadata,
           media: pdfMedia,
-          fields: "id",
+          fields: "id, webViewLink",
         });
 
+        const pdfFileId = pdfUploadResponse.data.id;
+        const pdfLink = pdfUploadResponse.data.webViewLink;
+
+        // Append the data, including the PDF link, to the spreadsheet
+        const values = [
+          [
+            voucherData.voucherNo,
+            voucherData.date,
+            voucherData.filter,
+            voucherData.payTo,
+            voucherData.accountHead,
+            voucherData.paidBy,
+            voucherData.account,
+            voucherData.amount,
+            voucherData.amountRs,
+            voucherData.preparedBy,
+            voucherData.checkedBy,
+            voucherData.approvedBy,
+            voucherData.receiverSignature,
+            pdfLink,  // Add the PDF link here
+          ],
+        ];
+
+        await sheets.spreadsheets.values.append({
+          spreadsheetId,
+          range: `${sheetTitle}!A:O`,
+          valueInputOption: "RAW",
+          requestBody: {
+            values,
+          },
+        });
+
+        // Clean up by removing the PDF file from the local server
         fs.unlinkSync(pdfFilePath);
 
         res.status(200).send({
           message: "Data submitted successfully and PDF uploaded!",
           sheetURL: sheetURL,
-          pdfFileId: pdfUploadResponse.data.id,
+          pdfFileId: pdfFileId,
         });
       } catch (error) {
         console.error("Error uploading PDF:", error);
