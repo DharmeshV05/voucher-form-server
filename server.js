@@ -188,20 +188,21 @@ app.post("/submit", upload.none(), async (req, res) => {
     doc.fontSize(12).text(voucherData.amountRs, 130, 320);
 
     const amountSectionY = 320;
-    const gap = 50; // Adjusted gap
+    const gap = 60;
     const signatureSectionY = amountSectionY + gap;
 
     const drawSignatureLine = (label, xPosition, yPosition) => {
-      doc
-        .moveTo(xPosition, yPosition)
-        .lineTo(xPosition + 100, yPosition)
-        .stroke();
-      doc.fontSize(12).text(label, xPosition, yPosition + 5);
-    };
+    doc
+    .moveTo(xPosition, yPosition)
+    .lineTo(xPosition + 100, yPosition)
+    .stroke();
+    doc.fontSize(12).text(label, xPosition, yPosition + 5);
+  };
 
-    drawSignatureLine("Checked By", 180, signatureSectionY);
-    drawSignatureLine("Approved By", 330, signatureSectionY);
-    drawSignatureLine("Receiver Signature", 480, signatureSectionY);
+
+    drawSignatureLine("Checked By", 50, signatureSectionY);
+    drawSignatureLine("Approved By", 250, signatureSectionY);
+    drawSignatureLine("Receiver Signature", 450, signatureSectionY);
 
     doc.end();
 
