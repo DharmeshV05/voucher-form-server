@@ -20,12 +20,6 @@ app.use(
   })
 );
 
-app.use(cors({
-  origin: '*', 
-  credentials: true,
-  optionsSuccessStatus: 200
-}));
-
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
 
