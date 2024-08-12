@@ -92,7 +92,6 @@ app.post("/submit", upload.none(), async (req, res) => {
       return res.status(400).send({ error: "Invalid filter option" });
     }
 
-    
     lastVoucherNumbers[filterOption]++;
     const voucherNo = lastVoucherNumbers[filterOption];
     voucherData.voucherNo = voucherNo;
@@ -100,7 +99,6 @@ app.post("/submit", upload.none(), async (req, res) => {
     const sheetTitle = filterOption;
     const sheetURL = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
 
-    
     const getSpreadsheetResponse = await sheets.spreadsheets.get({
       spreadsheetId,
     });
@@ -178,20 +176,19 @@ app.post("/submit", upload.none(), async (req, res) => {
     };
 
     drawLineAndText("Pay to:", voucherData.payTo, 160);
-    // drawLineAndText("Pay by:", voucherData.paidBy, 200);
-    drawLineAndText("Account Head:", voucherData.accountHead, 240);
-    drawLineAndText("Towards:", voucherData.account, 280);
+    drawLineAndText("Account Head:", voucherData.accountHead, 200); // Adjusted gap
+    drawLineAndText("Towards:", voucherData.account, 240);
 
-    doc.fontSize(12).text("Amount Rs.", 30, 320);
+    doc.fontSize(12).text("Amount Rs.", 30, 280);
+    doc.moveTo(120, 292).lineTo(550, 292).stroke();
+    doc.fontSize(12).text(voucherData.amount, 130, 280);
+
+    doc.fontSize(12).text("The Sum.", 30, 320);
     doc.moveTo(120, 332).lineTo(550, 332).stroke();
-    doc.fontSize(12).text(voucherData.amount, 130, 320);
+    doc.fontSize(12).text(voucherData.amountRs, 130, 320);
 
-    doc.fontSize(12).text("The Sum.", 30, 360);
-    doc.moveTo(120, 372).lineTo(550, 372).stroke();
-    doc.fontSize(12).text(voucherData.amountRs, 130, 360);
-
-    const amountSectionY = 360;
-    const gap = 60;
+    const amountSectionY = 320;
+    const gap = 50; // Adjusted gap
     const signatureSectionY = amountSectionY + gap;
 
     const drawSignatureLine = (label, xPosition, yPosition) => {
@@ -202,7 +199,6 @@ app.post("/submit", upload.none(), async (req, res) => {
       doc.fontSize(12).text(label, xPosition, yPosition + 5);
     };
 
-    // drawSignatureLine("Prepared By", 30, signatureSectionY);
     drawSignatureLine("Checked By", 180, signatureSectionY);
     drawSignatureLine("Approved By", 330, signatureSectionY);
     drawSignatureLine("Receiver Signature", 480, signatureSectionY);
@@ -211,7 +207,6 @@ app.post("/submit", upload.none(), async (req, res) => {
 
     pdfStream.on("finish", async () => {
       try {
-        
         const pdfFileMetadata = {
           name: pdfFileName,
           parents: [driveFolderId],
@@ -229,7 +224,6 @@ app.post("/submit", upload.none(), async (req, res) => {
         const pdfFileId = pdfUploadResponse.data.id;
         const pdfLink = pdfUploadResponse.data.webViewLink;
 
-       
         const values = [
           [
             voucherData.voucherNo,
@@ -237,11 +231,9 @@ app.post("/submit", upload.none(), async (req, res) => {
             voucherData.filter,
             voucherData.payTo,
             voucherData.accountHead,
-            // voucherData.paidBy,
             voucherData.account,
             voucherData.amount,
             voucherData.amountRs,
-            // voucherData.preparedBy,
             voucherData.checkedBy,
             voucherData.approvedBy,
             voucherData.receiverSignature,
@@ -258,7 +250,6 @@ app.post("/submit", upload.none(), async (req, res) => {
           },
         });
 
-        
         fs.unlinkSync(pdfFilePath);
 
         res.status(200).send({
@@ -281,6 +272,7 @@ app.post("/submit", upload.none(), async (req, res) => {
     res.status(500).send({ error: "Failed to submit data" });
   }
 });
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
