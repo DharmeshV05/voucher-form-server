@@ -8,6 +8,7 @@ const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
+const axios = require("axios"); 
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -65,6 +66,16 @@ const lastVoucherNumbers = {
   Surfboard: 0,
   RawEngineering: 0,
 };
+
+setInterval(() => {
+  axios.get(`http://localhost:${PORT}`)
+    .then(response => {
+      console.log("Pinged server to keep it warm.");
+    })
+    .catch(error => {
+      console.error("Error pinging the server:", error.message);
+    });
+}, 300000);
 
 app.get("/get-voucher-no", (req, res) => {
   const filter = req.query.filter;
