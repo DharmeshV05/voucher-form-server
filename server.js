@@ -52,11 +52,9 @@ const headerValues = [
   "Filter",
   "Pay to",
   "Account Head",
-  // "Paid by",
   "Towards",
   "The Sum",
   "Amount Rs.",
-  // "Prepared By",
   "Checked By",
   "Approved By",
   "Receiver Signature",
@@ -157,7 +155,7 @@ app.post("/submit", upload.none(), async (req, res) => {
                   title: sheetTitle,
                   gridProperties: {
                     rowCount: 1000,
-                    columnCount: 14,
+                    columnCount: headerValues.length + 1, 
                   },
                 },
               },
@@ -165,7 +163,7 @@ app.post("/submit", upload.none(), async (req, res) => {
           ],
         },
       });
-
+    
       await sheets.spreadsheets.values.update({
         spreadsheetId,
         range: `${sheetTitle}!A1:O1`,
