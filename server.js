@@ -8,7 +8,6 @@ const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
-const axios = require("axios"); // Import axios to make HTTP requests
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -67,17 +66,6 @@ const lastVoucherNumbers = {
   RawEngineering: 0,
 };
 
-// Periodic ping to keep the server warm
-setInterval(() => {
-  axios.get(`http://localhost:${PORT}`)
-    .then(response => {
-      console.log("Pinged server to keep it warm.");
-    })
-    .catch(error => {
-      console.error("Error pinging the server:", error.message);
-    });
-}, 300000); // Ping every 5 minutes (300000 milliseconds)
-
 app.get("/get-voucher-no", (req, res) => {
   const filter = req.query.filter;
   if (!filter || !filterToSpreadsheetMap[filter]) {
@@ -85,49 +73,6 @@ app.get("/get-voucher-no", (req, res) => {
   }
   res.send({ voucherNo: lastVoucherNumbers[filter] + 1 });
 });
-
-// reset
-app.post("/reset", async (req, res) => {
-  try {
-    // Reset the lastVoucherNumbers to 0 for all filters
-    for (const filter in lastVoucherNumbers) {
-      lastVoucherNumbers[filter] = 0;
-    }
-
-    // Clear data from all sheets
-    for (const filter in filterToSpreadsheetMap) {
-      const spreadsheetId = filterToSpreadsheetMap[filter];
-
-      // Get the sheet title
-      const sheetTitle = filter;
-
-      // Check if the sheet exists
-      const getSpreadsheetResponse = await sheets.spreadsheets.get({
-        spreadsheetId,
-      });
-      const sheetsList = getSpreadsheetResponse.data.sheets;
-      const sheetExists = sheetsList.some(
-        (sheet) => sheet.properties.title === sheetTitle
-      );
-
-      if (sheetExists) {
-        // Clear the existing data (but keep the headers)
-        await sheets.spreadsheets.values.clear({
-          spreadsheetId,
-          range: `${sheetTitle}!A2:N1000`, // Adjust the range if needed
-        });
-      }
-    }
-
-    res.status(200).send({
-      message: "All data has been reset successfully!",
-    });
-  } catch (error) {
-    console.error("Error resetting data:", error);
-    res.status(500).send({ error: "Failed to reset data" });
-  }
-});
-// 
 
 app.post("/submit", upload.none(), async (req, res) => {
   try {
@@ -166,7 +111,7 @@ app.post("/submit", upload.none(), async (req, res) => {
                   title: sheetTitle,
                   gridProperties: {
                     rowCount: 1000,
-                    columnCount: headerValues.length + 1, 
+                    columnCount: 14,
                   },
                 },
               },
@@ -174,7 +119,7 @@ app.post("/submit", upload.none(), async (req, res) => {
           ],
         },
       });
-    
+
       await sheets.spreadsheets.values.update({
         spreadsheetId,
         range: `${sheetTitle}!A1:O1`,
