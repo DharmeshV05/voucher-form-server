@@ -68,7 +68,6 @@ const lastVoucherNumbers = {
   RawEngineering: 0,
 };
 
-// Ping mechanism to keep the server alive
 setInterval(() => {
   axios.get(`http://localhost:${PORT}/ping`)
     .then(response => {
@@ -77,7 +76,7 @@ setInterval(() => {
     .catch(error => {
       console.error("Error pinging the server:", error.message);
     });
-}, 30000); // Every 30 seconds
+}, 30000); 
 
 // Ping endpoint
 app.get('/ping', (req, res) => {
