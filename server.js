@@ -68,15 +68,22 @@ const lastVoucherNumbers = {
   RawEngineering: 0,
 };
 
+// Ping mechanism to keep the server alive
 setInterval(() => {
-  axios.get(`http://localhost:${PORT}`)
+  axios.get(`http://localhost:${PORT}/ping`)
     .then(response => {
       console.log("Pinged server to keep it warm.");
     })
     .catch(error => {
       console.error("Error pinging the server:", error.message);
     });
-}, 300000);
+}, 30000); // Every 30 seconds
+
+// Ping endpoint
+app.get('/ping', (req, res) => {
+  res.status(200).send({ message: 'Server is active' });
+});
+
 
 app.get("/get-voucher-no", (req, res) => {
   const filter = req.query.filter;
