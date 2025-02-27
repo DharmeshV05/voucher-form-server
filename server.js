@@ -82,7 +82,6 @@ app.get('/ping', (req, res) => {
   res.status(200).send({ message: 'Server is active' });
 });
 
-
 app.get("/get-voucher-no", (req, res) => {
   const filter = req.query.filter;
   if (!filter || !filterToSpreadsheetMap[filter]) {
@@ -94,6 +93,7 @@ app.get("/get-voucher-no", (req, res) => {
 app.post("/submit", upload.none(), async (req, res) => {
   try {
     const voucherData = req.body;
+    console.log("Received voucherData:", voucherData); // Debug log to verify incoming data
     const filterOption = voucherData.filter;
     const spreadsheetId = filterToSpreadsheetMap[filterOption];
 
@@ -163,14 +163,26 @@ app.post("/submit", upload.none(), async (req, res) => {
     doc.fontSize(12).text(voucherData.voucherNo, 470, 40);
     doc.moveTo(440, underlineYPosition + 20).lineTo(550, underlineYPosition + 20).stroke();
 
+    // Define filterLogoMap with resolved file paths
     const filterLogoMap = {
-      Contentstack: "public/contentstack.png",
-      Surfboard: "public/surfboard.png",
-      RawEngineering: "public/raw.png",
+      Contentstack: path.join(__dirname, "public", "contentstack.png"), // Use absolute path
+      Surfboard: path.join(__dirname, "public", "surfboard.png"),
+      RawEngineering: path.join(__dirname, "public", "raw.png"),
     };
     const filterLogo = filterLogoMap[voucherData.filter];
+    console.log("Resolved logo path:", filterLogo); // Debug log to verify path
     if (filterLogo) {
-      doc.image(filterLogo, 30, 30, { width: 100 });
+      try {
+        // Verify file exists before adding to PDF
+        if (fs.existsSync(filterLogo)) {
+          doc.image(filterLogo, 30, 30, { width: 100 });
+          console.log(`Successfully added logo: ${filterLogo}`);
+        } else {
+          console.error(`Logo file not found: ${filterLogo}`);
+        }
+      } catch (error) {
+        console.error(`Error loading logo ${filterLogo}:`, error.message);
+      }
     }
 
     doc.moveDown(3);
@@ -185,7 +197,7 @@ app.post("/submit", upload.none(), async (req, res) => {
     };
 
     drawLineAndText("Pay to:", voucherData.payTo, 160);
-    drawLineAndText("Account Head:", voucherData.accountHead, 200); // Adjusted gap
+    drawLineAndText("Account Head:", voucherData.accountHead, 200);
     drawLineAndText("Towards:", voucherData.account, 240);
 
     doc.fontSize(12).text("Amount Rs.", 30, 280);
@@ -201,13 +213,12 @@ app.post("/submit", upload.none(), async (req, res) => {
     const signatureSectionY = amountSectionY + gap;
 
     const drawSignatureLine = (label, xPosition, yPosition) => {
-    doc
-    .moveTo(xPosition, yPosition)
-    .lineTo(xPosition + 100, yPosition)
-    .stroke();
-    doc.fontSize(12).text(label, xPosition, yPosition + 5);
-  };
-
+      doc
+        .moveTo(xPosition, yPosition)
+        .lineTo(xPosition + 100, yPosition)
+        .stroke();
+      doc.fontSize(12).text(label, xPosition, yPosition + 5);
+    };
 
     drawSignatureLine("Checked By", 50, signatureSectionY);
     drawSignatureLine("Approved By", 250, signatureSectionY);
@@ -282,7 +293,6 @@ app.post("/submit", upload.none(), async (req, res) => {
     res.status(500).send({ error: "Failed to submit data" });
   }
 });
-
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
