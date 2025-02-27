@@ -8,8 +8,7 @@ const PDFDocument = require("pdfkit");
 const fs = require("fs");
 const path = require("path");
 const cors = require("cors");
-const axios = require("axios");
-const nodemailer = require("nodemailer"); // Added for email notifications
+const axios = require("axios"); 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -60,19 +59,8 @@ const headerValues = [
   "Checked By",
   "Approved By",
   "Receiver Signature",
-  "PDF Link",
 ];
 
-// Email transporter setup
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
-
-// Centralized voucher number storage (in-memory for simplicity, ideally use a database)
 const lastVoucherNumbers = {
   Contentstack: 0,
   Surfboard: 0,
@@ -80,74 +68,32 @@ const lastVoucherNumbers = {
 };
 
 setInterval(() => {
-  axios
-    .get(`http://localhost:${PORT}/ping`)
-    .then((response) => {
+  axios.get(`http://localhost:${PORT}/ping`)
+    .then(response => {
       console.log("Pinged server to keep it warm.");
     })
-    .catch((error) => {
+    .catch(error => {
       console.error("Error pinging the server:", error.message);
     });
-}, 30000);
+}, 30000); 
 
 // Ping endpoint
-app.get("/ping", (req, res) => {
-  res.status(200).send({ message: "Server is active" });
+app.get('/ping', (req, res) => {
+  res.status(200).send({ message: 'Server is active' });
 });
 
-// Centralized voucher number generation
-app.get("/get-voucher-no", async (req, res) => {
+app.get("/get-voucher-no", (req, res) => {
   const filter = req.query.filter;
   if (!filter || !filterToSpreadsheetMap[filter]) {
     return res.status(400).send({ error: "Invalid filter option" });
   }
-  try {
-    const spreadsheetId = filterToSpreadsheetMap[filter];
-    const range = `${filter}!A:A`; // Assuming voucher numbers are in column A
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range,
-    });
-    const rows = response.data.values || [];
-    const lastNumber = rows.length > 1 ? parseInt(rows[rows.length - 1][0].split("-")[2]) || 0 : 0;
-    const prefix = `${filter.slice(0, 2).toUpperCase()}-${new Date().getFullYear()}-`;
-    const newNumber = String(lastNumber + 1).padStart(3, "0");
-    res.send({ voucherNo: `${prefix}${newNumber}` });
-  } catch (error) {
-    console.error("Error fetching voucher number:", error);
-    // Fallback to in-memory if Sheets fails
-    lastVoucherNumbers[filter]++;
-    const prefix = `${filter.slice(0, 2).toUpperCase()}-${new Date().getFullYear()}-`;
-    res.send({ voucherNo: `${prefix}${String(lastVoucherNumbers[filter]).padStart(3, "0")}` });
-  }
-});
-
-// Auto-fill suggestions endpoint
-app.get("/get-suggestions", async (req, res) => {
-  const filter = req.query.filter;
-  if (!filter || !filterToSpreadsheetMap[filter]) {
-    return res.status(400).send({ error: "Invalid filter option" });
-  }
-  try {
-    const spreadsheetId = filterToSpreadsheetMap[filter];
-    const range = `${filter}!D:D`; // "Pay to" is in column D
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range,
-    });
-    const payToValues = response.data.values ? response.data.values.flat().filter(Boolean) : [];
-    const uniquePayToSuggestions = [...new Set(payToValues.slice(1))]; // Remove header and duplicates
-    res.send({ payToSuggestions: uniquePayToSuggestions });
-  } catch (error) {
-    console.error("Error fetching suggestions:", error);
-    res.status(500).send({ error: "Failed to fetch suggestions" });
-  }
+  res.send({ voucherNo: lastVoucherNumbers[filter] + 1 });
 });
 
 app.post("/submit", upload.none(), async (req, res) => {
   try {
     const voucherData = req.body;
-    console.log("Received voucherData:", voucherData);
+    console.log("Received voucherData:", voucherData); // Debug log to verify incoming data
     const filterOption = voucherData.filter;
     const spreadsheetId = filterToSpreadsheetMap[filterOption];
 
@@ -155,7 +101,9 @@ app.post("/submit", upload.none(), async (req, res) => {
       return res.status(400).send({ error: "Invalid filter option" });
     }
 
-    voucherData.voucherNo = voucherData.voucherNo; // Already set by frontend from /get-voucher-no
+    lastVoucherNumbers[filterOption]++;
+    const voucherNo = lastVoucherNumbers[filterOption];
+    voucherData.voucherNo = voucherNo;
 
     const sheetTitle = filterOption;
     const sheetURL = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/edit`;
@@ -194,18 +142,18 @@ app.post("/submit", upload.none(), async (req, res) => {
         range: `${sheetTitle}!A1:O1`,
         valueInputOption: "RAW",
         requestBody: {
-          values: [headerValues],
+          values: [headerValues.concat("PDF Link")],
         },
       });
     }
 
-    const pdfFileName = `${filterOption}_${voucherData.voucherNo}.pdf`;
+    const pdfFileName = `${filterOption}_${voucherNo}.pdf`;
     const pdfFilePath = path.join(__dirname, pdfFileName);
     const doc = new PDFDocument({ margin: 30 });
     const pdfStream = fs.createWriteStream(pdfFilePath);
     doc.pipe(pdfStream);
 
-    const underlineYPosition = 35;
+    const underlineYPosition = 35; 
 
     doc.fontSize(12).text("Date:", 400, 20);
     doc.fontSize(12).text(voucherData.date, 440, 20);
@@ -215,21 +163,36 @@ app.post("/submit", upload.none(), async (req, res) => {
     doc.fontSize(12).text(voucherData.voucherNo, 470, 40);
     doc.moveTo(440, underlineYPosition + 20).lineTo(550, underlineYPosition + 20).stroke();
 
+    // Define filterLogoMap with resolved file paths
     const filterLogoMap = {
-      Contentstack: path.join(__dirname, "public", "contentstack.png"),
+      Contentstack: path.join(__dirname, "public", "contentstack.png"), // Use absolute path
       Surfboard: path.join(__dirname, "public", "surfboard.png"),
       RawEngineering: path.join(__dirname, "public", "raw.png"),
     };
     const filterLogo = filterLogoMap[voucherData.filter];
-    if (fs.existsSync(filterLogo)) {
-      doc.image(filterLogo, 30, 30, { width: 100 });
+    console.log("Resolved logo path:", filterLogo); // Debug log to verify path
+    if (filterLogo) {
+      try {
+        // Verify file exists before adding to PDF
+        if (fs.existsSync(filterLogo)) {
+          doc.image(filterLogo, 30, 30, { width: 100 });
+          console.log(`Successfully added logo: ${filterLogo}`);
+        } else {
+          console.error(`Logo file not found: ${filterLogo}`);
+        }
+      } catch (error) {
+        console.error(`Error loading logo ${filterLogo}:`, error.message);
+      }
     }
 
     doc.moveDown(3);
 
     const drawLineAndText = (label, value, yPosition) => {
       doc.fontSize(12).text(label, 30, yPosition);
-      doc.moveTo(120, yPosition + 12).lineTo(550, yPosition + 12).stroke();
+      doc
+        .moveTo(120, yPosition + 12)
+        .lineTo(550, yPosition + 12)
+        .stroke();
       doc.fontSize(12).text(value, 130, yPosition);
     };
 
@@ -250,22 +213,16 @@ app.post("/submit", upload.none(), async (req, res) => {
     const signatureSectionY = amountSectionY + gap;
 
     const drawSignatureLine = (label, xPosition, yPosition) => {
-      doc.moveTo(xPosition, yPosition).lineTo(xPosition + 100, yPosition).stroke();
+      doc
+        .moveTo(xPosition, yPosition)
+        .lineTo(xPosition + 100, yPosition)
+        .stroke();
       doc.fontSize(12).text(label, xPosition, yPosition + 5);
     };
 
     drawSignatureLine("Checked By", 50, signatureSectionY);
     drawSignatureLine("Approved By", 250, signatureSectionY);
     drawSignatureLine("Receiver Signature", 450, signatureSectionY);
-
-    // Add digital signature if provided
-    if (voucherData.receiverSignature) {
-      const signatureBuffer = Buffer.from(
-        voucherData.receiverSignature.split(",")[1],
-        "base64"
-      );
-      doc.image(signatureBuffer, 450, signatureSectionY - 20, { width: 100 });
-    }
 
     doc.end();
 
@@ -300,8 +257,8 @@ app.post("/submit", upload.none(), async (req, res) => {
             voucherData.amountRs,
             voucherData.checkedBy,
             voucherData.approvedBy,
-            voucherData.receiverSignature ? "Signed" : "",
-            pdfLink,
+            voucherData.receiverSignature,
+            pdfLink,  
           ],
         ];
 
@@ -314,15 +271,6 @@ app.post("/submit", upload.none(), async (req, res) => {
           },
         });
 
-        // Send approval notification
-        await transporter.sendMail({
-          from: process.env.EMAIL_USER,
-          to: process.env.APPROVER_EMAIL || "approver@example.com",
-          subject: `Voucher ${voucherData.voucherNo} Submitted for Approval`,
-          text: `A new voucher has been submitted.\nSheet: ${sheetURL}\nPDF: ${pdfLink}`,
-        });
-        console.log("Approval email sent");
-
         fs.unlinkSync(pdfFilePath);
 
         res.status(200).send({
@@ -331,8 +279,8 @@ app.post("/submit", upload.none(), async (req, res) => {
           pdfFileId: pdfFileId,
         });
       } catch (error) {
-        console.error("Error uploading PDF or sending email:", error);
-        res.status(500).send({ error: "Failed to upload PDF or notify approver" });
+        console.error("Error uploading PDF:", error);
+        res.status(500).send({ error: "Failed to upload PDF" });
       }
     });
 
